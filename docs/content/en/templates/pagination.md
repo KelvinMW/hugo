@@ -1,42 +1,38 @@
 ---
 title: Pagination
-linktitle: Pagination
 description: Hugo supports pagination for your homepage, section pages, and taxonomies.
-date: 2017-02-01
-publishdate: 2017-02-01
 categories: [templates]
 keywords: [lists,sections,pagination]
 menu:
   docs:
-    parent: "templates"
-    weight: 140
-weight: 140
-sections_weight: 140
-aliases: [/extras/pagination,/doc/pagination/]
+    parent: templates
+    weight: 100
+weight: 100
 toc: true
+aliases: [/extras/pagination,/doc/pagination/]
 ---
 
-The real power of Hugo pagination shines when combined with the [`where` function][where] and its SQL-like operators: [`first`], [`last`], and [`after`]. You can even [order the content][lists] the way you've become used to with Hugo.
+The real power of Hugo pagination shines when combined with the [`where`] function and its SQL-like operators: [`first`], [`last`], and [`after`]. You can even [order the content][lists] the way you've become used to with Hugo.
 
-## Configure Pagination
+## Configure pagination
 
 Pagination can be configured in your [site configuration][configuration]:
 
-`paginate`
+paginate
 : default = `10`. This setting can be overridden within the template.
 
-`paginatePath`
+paginatePath
 : default = `page`. Allows you to set a different path for your pagination pages.
 
 Setting `paginate` to a positive value will split the list pages for the homepage, sections and taxonomies into chunks of that size. But note that the generation of the pagination pages for sections, taxonomies and homepage is *lazy* --- the pages will not be created if not referenced by a `.Paginator` (see below).
 
 `paginatePath` is used to adapt the `URL` to the pages in the paginator (the default setting will produce URLs on the form `/page/1/`.
 
-## List Paginator Pages
+## List paginator pages
 
-{{% warning %}}
+{{% note %}}
 `.Paginator` is provided to help you build a pager menu. This feature is currently only supported on homepage and list pages (i.e., taxonomies and section lists).
-{{% /warning %}}
+{{% /note %}}
 
 There are two ways to configure and use a `.Paginator`:
 
@@ -59,7 +55,7 @@ The global page size setting (`Paginate`) can be overridden by providing a posit
 It is also possible to use the `GroupBy` functions in combination with pagination:
 
 ```go-html-template
-{{ range (.Paginate (.Pages.GroupByDate "2006")).PageGroups  }}
+{{ range (.Paginate (.Pages.GroupByDate "2006")).PageGroups }}
 ```
 
 ## Build the navigation
@@ -72,7 +68,7 @@ The easiest way to add this to your pages is to include the built-in template (w
 {{ template "_internal/pagination.html" . }}
 ```
 
-{{% note "When to Create `.Paginator`" %}}
+{{% note %}}
 If you use any filters or ordering functions to create your `.Paginator` *and* you want the navigation buttons to be shown before the page listing, you must create the `.Paginator` before it's used.
 {{% /note %}}
 
@@ -82,7 +78,7 @@ The following example shows how to create `.Paginator` before its used:
 {{ $paginator := .Paginate (where .Pages "Type" "posts") }}
 {{ template "_internal/pagination.html" . }}
 {{ range $paginator.Pages }}
-   {{ .Title }}
+  {{ .Title }}
 {{ end }}
 ```
 
@@ -91,52 +87,52 @@ Without the `where` filter, the above example is even simpler:
 ```go-html-template
 {{ template "_internal/pagination.html" . }}
 {{ range .Paginator.Pages }}
-   {{ .Title }}
+  {{ .Title }}
 {{ end }}
 ```
 
 If you want to build custom navigation, you can do so using the `.Paginator` object, which includes the following properties:
 
-`PageNumber`
+PageNumber
 : The current page's number in the pager sequence
 
-`URL`
+URL
 : The relative URL to the current pager
 
-`Pages`
+Pages
 : The pages in the current pager
 
-`NumberOfElements`
+NumberOfElements
 : The number of elements on this page
 
-`HasPrev`
+HasPrev
 : Whether there are page(s) before the current
 
-`Prev`
+Prev
 : The pager for the previous page
 
-`HasNext`
+HasNext
 : Whether there are page(s) after the current
 
-`Next`
+Next
 : The pager for the next page
 
-`First`
+First
 : The pager for the first page
 
-`Last`
+Last
 : The pager for the last page
 
-`Pagers`
+Pagers
 : A list of pagers that can be used to build a pagination menu
 
-`PageSize`
+PageSize
 : Size of each pager
 
-`TotalPages`
+TotalPages
 : The number of pages in the paginator
 
-`TotalNumberOfElements`
+TotalNumberOfElements
 : The number of elements on all pages in this paginator
 
 ## Additional information
@@ -150,9 +146,9 @@ The pages are built on the following form (`BLANK` means no value):
 ....
 ```
 
-[`first`]: /functions/first/
-[`last`]: /functions/last/
-[`after`]: /functions/after/
+[`first`]: /functions/collections/first/
+[`last`]: /functions/collections/last/
+[`after`]: /functions/collections/after/
 [configuration]: /getting-started/configuration/
 [lists]: /templates/lists/
-[where]: /functions/where/
+[`where`]: /functions/collections/where

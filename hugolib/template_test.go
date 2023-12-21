@@ -16,10 +16,10 @@ package hugolib
 import (
 	"fmt"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/gohugoio/hugo/config"
+	"github.com/gohugoio/hugo/config/allconfig"
 	"github.com/gohugoio/hugo/identity"
 
 	qt "github.com/frankban/quicktest"
@@ -30,9 +30,10 @@ import (
 
 func TestTemplateLookupOrder(t *testing.T) {
 	var (
-		fs  *hugofs.Fs
-		cfg config.Provider
-		th  testHelper
+		fs      *hugofs.Fs
+		cfg     config.Provider
+		th      testHelper
+		configs *allconfig.Configs
 	)
 
 	// Variants base templates:
@@ -189,7 +190,8 @@ func TestTemplateLookupOrder(t *testing.T) {
 		t.Run(this.name, func(t *testing.T) {
 			// TODO(bep) there are some function vars need to pull down here to enable => t.Parallel()
 			cfg, fs = newTestCfg()
-			th = newTestHelper(cfg, fs, t)
+			this.setup(t)
+			th, configs = newTestHelperFromProvider(cfg, fs, t)
 
 			for i := 1; i <= 3; i++ {
 				writeSource(t, fs, filepath.Join("content", fmt.Sprintf("sect%d", i), fmt.Sprintf("page%d.md", i)), `---
@@ -199,9 +201,7 @@ Some content
 `)
 			}
 
-			this.setup(t)
-
-			buildSingleSite(t, deps.DepsCfg{Fs: fs, Cfg: cfg}, BuildCfg{})
+			buildSingleSite(t, deps.DepsCfg{Fs: fs, Configs: configs}, BuildCfg{})
 			// helpers.PrintFs(s.BaseFs.Layouts.Fs, "", os.Stdout)
 			this.assert(t)
 		})
@@ -633,10 +633,6 @@ func collectIdentities(set map[identity.Identity]bool, provider identity.Provide
 	} else {
 		set[provider.GetIdentity()] = true
 	}
-}
-
-func ident(level int) string {
-	return strings.Repeat(" ", level)
 }
 
 func TestPartialInline(t *testing.T) {

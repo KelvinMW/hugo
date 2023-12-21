@@ -22,16 +22,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bep/logg"
 	"github.com/gohugoio/hugo/config"
 	"github.com/gohugoio/hugo/modules/npm"
-
-	"github.com/gohugoio/hugo/common/loggers"
 
 	"github.com/spf13/afero"
 
 	"github.com/gohugoio/hugo/hugofs/files"
 
 	"github.com/gohugoio/hugo/common/hugo"
+	"github.com/gohugoio/hugo/common/loggers"
 
 	"github.com/gohugoio/hugo/htesting"
 	"github.com/gohugoio/hugo/hugofs"
@@ -63,9 +63,10 @@ path="github.com/gohugoio/hugoTestModule2"
 		b := newTestSitesBuilder(t)
 		tempDir := t.TempDir()
 		workingDir := filepath.Join(tempDir, "myhugosite")
-		b.Assert(os.MkdirAll(workingDir, 0777), qt.IsNil)
-		cfg := config.NewWithTestDefaults()
+		b.Assert(os.MkdirAll(workingDir, 0o777), qt.IsNil)
+		cfg := config.New()
 		cfg.Set("workingDir", workingDir)
+		cfg.Set("publishDir", "public")
 		b.Fs = hugofs.NewDefault(cfg)
 		b.WithWorkingDir(workingDir).WithConfigFile("toml", createConfig(workingDir, moduleOpts))
 		b.WithTemplates(
@@ -329,8 +330,9 @@ func TestHugoModulesMatrix(t *testing.T) {
 		c.Assert(err, qt.IsNil)
 		defer clean()
 
-		v := config.NewWithTestDefaults()
+		v := config.New()
 		v.Set("workingDir", workingDir)
+		v.Set("publishDir", "public")
 
 		configTemplate := `
 baseURL = "https://example.com"
@@ -644,14 +646,14 @@ min_version = 0.55.0
 
 `)
 
-	logger := loggers.NewWarningLogger()
+	logger := loggers.NewDefault()
 	b.WithLogger(logger)
 
 	b.Build(BuildCfg{})
 
 	c := qt.New(t)
 
-	c.Assert(logger.LogCounters().WarnCounter.Count(), qt.Equals, uint64(3))
+	c.Assert(logger.LoggCount(logg.LevelWarn), qt.Equals, 3)
 }
 
 func TestModulesSymlinks(t *testing.T) {
@@ -667,9 +669,10 @@ func TestModulesSymlinks(t *testing.T) {
 	c.Assert(err, qt.IsNil)
 
 	// We need to use the OS fs for this.
-	cfg := config.NewWithTestDefaults()
+	cfg := config.New()
 	cfg.Set("workingDir", workingDir)
-	fs := hugofs.NewFrom(hugofs.Os, cfg)
+	cfg.Set("publishDir", "public")
+	fs := hugofs.NewFromOld(hugofs.Os, cfg)
 
 	defer clean()
 
@@ -680,11 +683,11 @@ Data: {{ .Site.Data }}
 	createDirsAndFiles := func(baseDir string) {
 		for _, dir := range files.ComponentFolders {
 			realDir := filepath.Join(baseDir, dir, "real")
-			c.Assert(os.MkdirAll(realDir, 0777), qt.IsNil)
-			c.Assert(afero.WriteFile(fs.Source, filepath.Join(realDir, "data.toml"), []byte("[hello]\nother = \"hello\""), 0777), qt.IsNil)
+			c.Assert(os.MkdirAll(realDir, 0o777), qt.IsNil)
+			c.Assert(afero.WriteFile(fs.Source, filepath.Join(realDir, "data.toml"), []byte("[hello]\nother = \"hello\""), 0o777), qt.IsNil)
 		}
 
-		c.Assert(afero.WriteFile(fs.Source, filepath.Join(baseDir, "layouts", "index.html"), []byte(homeTemplate), 0777), qt.IsNil)
+		c.Assert(afero.WriteFile(fs.Source, filepath.Join(baseDir, "layouts", "index.html"), []byte(homeTemplate), 0o777), qt.IsNil)
 	}
 
 	// Create project dirs and files.
@@ -724,7 +727,7 @@ weight = 2
 `
 
 	b := newTestSitesBuilder(t).WithNothingAdded().WithWorkingDir(workingDir)
-	b.WithLogger(loggers.NewErrorLogger())
+	b.WithLogger(loggers.NewDefault())
 	b.Fs = fs
 
 	b.WithConfigFile("toml", config)
@@ -842,8 +845,9 @@ workingDir = %q
 
 	b := newTestSitesBuilder(t).Running()
 
-	cfg := config.NewWithTestDefaults()
+	cfg := config.New()
 	cfg.Set("workingDir", workingDir)
+	cfg.Set("publishDir", "public")
 
 	b.Fs = hugofs.NewDefault(cfg)
 
@@ -873,8 +877,8 @@ workingDir = %q
 <a href="{{ $link | safeURL }}"{{ with .Title}} title="{{ . }}"{{ end }}{{ if $isRemote }} target="_blank"{{ end }}>{{ .Text | safeHTML }}</a>
 `)
 
-	os.Mkdir(filepath.Join(workingDir, "mycontent"), 0777)
-	os.Mkdir(filepath.Join(workingDir, "mycontent", "mybundle"), 0777)
+	os.Mkdir(filepath.Join(workingDir, "mycontent"), 0o777)
+	os.Mkdir(filepath.Join(workingDir, "mycontent", "mybundle"), 0o777)
 
 	b.WithSourceFile("README.md", `---
 title: "Readme Title"
@@ -967,11 +971,12 @@ workingDir = %q
 
 		b := newTestSitesBuilder(c).Running()
 
-		cfg := config.NewWithTestDefaults()
+		cfg := config.New()
 		cfg.Set("workingDir", workingDir)
+		cfg.Set("publishDir", "public")
 		b.Fs = hugofs.NewDefault(cfg)
 
-		os.MkdirAll(filepath.Join(workingDir, "content", "blog"), 0777)
+		os.MkdirAll(filepath.Join(workingDir, "content", "blog"), 0o777)
 
 		b.WithWorkingDir(workingDir).WithConfigFile("toml", tomlConfig)
 
@@ -1029,12 +1034,12 @@ title: P1
 		defer test.clean()
 
 		subContentDir := filepath.Join(test.workingDir, "mycontent", "sub")
-		os.MkdirAll(subContentDir, 0777)
+		os.MkdirAll(subContentDir, 0o777)
 		myPartialsDir := filepath.Join(test.workingDir, "subdir", "mypartials")
-		os.MkdirAll(myPartialsDir, 0777)
+		os.MkdirAll(myPartialsDir, 0o777)
 
 		absShortcodesDir := filepath.Join(absDir, "abs", "myshortcodes")
-		os.MkdirAll(absShortcodesDir, 0777)
+		os.MkdirAll(absShortcodesDir, 0o777)
 
 		b.WithSourceFile("README.md", "---\ntitle: Readme\n---")
 		b.WithSourceFile("mycontent/sub/p1.md", "---\ntitle: P1\n---")
@@ -1068,9 +1073,10 @@ func TestSiteWithGoModButNoModules(t *testing.T) {
 	workDir, clean, err := htesting.CreateTempDir(hugofs.Os, "hugo-no-mod")
 	c.Assert(err, qt.IsNil)
 
-	cfg := config.NewWithTestDefaults()
+	cfg := config.New()
 	cfg.Set("workingDir", workDir)
-	fs := hugofs.NewFrom(hugofs.Os, cfg)
+	cfg.Set("publishDir", "public")
+	fs := hugofs.NewFromOld(hugofs.Os, cfg)
 
 	defer clean()
 
@@ -1094,9 +1100,10 @@ func TestModuleAbsMount(t *testing.T) {
 	absContentDir, clean2, err := htesting.CreateTempDir(hugofs.Os, "hugo-content")
 	c.Assert(err, qt.IsNil)
 
-	cfg := config.NewWithTestDefaults()
+	cfg := config.New()
 	cfg.Set("workingDir", workDir)
-	fs := hugofs.NewFrom(hugofs.Os, cfg)
+	cfg.Set("publishDir", "public")
+	fs := hugofs.NewFromOld(hugofs.Os, cfg)
 
 	config := fmt.Sprintf(`
 workingDir=%q
@@ -1121,7 +1128,7 @@ title: Abs
 ---
 
 Content.
-`), 0777)
+`), 0o777)
 
 	b.WithWorkingDir(workDir).WithConfigFile("toml", config)
 	b.WithContent("dummy.md", "")
@@ -1170,4 +1177,33 @@ target = "content/resources-b"
 
 	b.AssertFileContent("public/resources-a/subdir/about/index.html", "Single")
 	b.AssertFileContent("public/resources-b/subdir/about/index.html", "Single")
+}
+
+func TestMountData(t *testing.T) {
+	files := `
+-- hugo.toml --
+baseURL = 'https://example.org/'
+disableKinds = ["taxonomy", "term", "RSS", "sitemap", "robotsTXT", "page", "section"]
+
+[[module.mounts]]
+source = "data"
+target = "data"
+
+[[module.mounts]]
+source = "extra-data"
+target = "data/extra"
+-- extra-data/test.yaml --
+message: Hugo Rocks
+-- layouts/index.html --
+{{ site.Data.extra.test.message }}
+`
+
+	b := NewIntegrationTestBuilder(
+		IntegrationTestConfig{
+			T:           t,
+			TxtarString: files,
+		},
+	).Build()
+
+	b.AssertFileContent("public/index.html", "Hugo Rocks")
 }

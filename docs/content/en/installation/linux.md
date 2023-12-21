@@ -1,41 +1,64 @@
 ---
 title: Linux
-linkTitle: Linux
 description: Install Hugo on Linux.
 categories: [installation]
+keywords: []
 menu:
   docs:
     parent: installation
     weight: 30
-toc: true
 weight: 30
+toc: true
 ---
-{{% readfile file="/installation/common/01-editions.md" %}}
+{{% include "installation/_common/01-editions.md" %}}
 
-{{% readfile file="/installation/common/02-prerequisites.md" %}}
+{{% include "installation/_common/02-prerequisites.md" %}}
 
-{{% readfile file="/installation/common/03-prebuilt-binaries.md" %}}
+{{% include "installation/_common/03-prebuilt-binaries.md" %}}
 
 ## Package managers
 
 ### Snap
 
-[Snap] is a free and open source package manager for Linux. Available for [most distributions], Snap packages are simple to install and are automatically updated. This will install the extended edition of Hugo:
+[Snap] is a free and open-source package manager for Linux. Available for [most distributions], snap packages are simple to install and are automatically updated.
+
+The Hugo snap package is [strictly confined]. Strictly confined snaps run in complete isolation, up to a minimal access level that’s deemed always safe. The sites you create and build must be located within your home directory, or on removable media.
+
+This will install the extended edition of Hugo:
 
 ```sh
 sudo snap install hugo
 ```
 
+To enable or revoke access to removable media:
+
+```sh
+sudo snap connect hugo:removable-media
+sudo snap disconnect hugo:removable-media
+```
+
+To enable or revoke access to SSH keys:
+
+```sh
+sudo snap connect hugo:ssh-keys
+sudo snap disconnect hugo:ssh-keys
+```
+
 [most distributions]: https://snapcraft.io/docs/installing-snapd
+[strictly confined]: https://snapcraft.io/docs/snap-confinement
 [Snap]: https://snapcraft.io/
 
-{{% readfile file="/installation/common/homebrew.md" %}}
+{{% include "installation/_common/homebrew.md" %}}
 
 ## Repository packages
 
-Most Linux distributions maintain a repository for commonly installed applications. Please note that these repositories may not contain the [latest release].
+Most Linux distributions maintain a repository for commonly installed applications.
+
+{{% note %}}
+Due to Long Term Release (LTR) guidelines, most Linux package repositories will not contain the [latest release].
 
 [latest release]: https://github.com/gohugoio/hugo/releases/latest
+{{% /note %}}
 
 ### Arch Linux
 
@@ -74,7 +97,6 @@ You can also download Debian packages from the [latest release] page.
 
 Derivatives of the [Fedora] distribution of Linux include [CentOS], [Red Hat Enterprise Linux], and others. This will install the extended edition of Hugo:
 
-
 ```sh
 sudo dnf install hugo
 ```
@@ -86,7 +108,6 @@ sudo dnf install hugo
 ### openSUSE
 
 Derivatives of the [openSUSE] distribution of Linux include [GeckoLinux], [Linux Karmada], and others. This will install the extended edition of Hugo:
-
 
 ```sh
 sudo zypper install hugo
@@ -104,22 +125,19 @@ The [Solus] distribution of Linux includes Hugo in its package repository. This 
 sudo eopkg install hugo
 ```
 
-[Solus]: https://getsol.us/home/
+[Solus]: https://getsol.us/
 
-{{% readfile file="/installation/common/04-docker.md" %}}
-
-{{% readfile file="/installation/common/05-build-from-source.md" %}}
+{{% include "installation/_common/04-build-from-source.md" %}}
 
 ## Comparison
 
-||Prebuilt binaries|Package managers|Repository packages|Docker|Build from source
-:--|:--:|:--:|:--:|:--:|:--:
-Easy to install?|:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:
-Easy to upgrade?|:heavy_check_mark:|:heavy_check_mark:|varies|:heavy_check_mark:|:heavy_check_mark:
-Easy to downgrade?|:heavy_check_mark:|:heavy_check_mark: [^1]|varies|:heavy_check_mark:|:heavy_check_mark:
-Automatic updates?|:x:|varies [^2]|:x:|:x: [^3]|:x:
-Latest version available?|:heavy_check_mark:|:heavy_check_mark:|varies|:heavy_check_mark:|:heavy_check_mark:
+||Prebuilt binaries|Package managers|Repository packages|Build from source
+:--|:--:|:--:|:--:|:--:
+Easy to install?|:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:
+Easy to upgrade?|:heavy_check_mark:|:heavy_check_mark:|varies|:heavy_check_mark:
+Easy to downgrade?|:heavy_check_mark:|:heavy_check_mark: [^1]|varies|:heavy_check_mark:
+Automatic updates?|:x:|varies [^2]|:x:|:x:
+Latest version available?|:heavy_check_mark:|:heavy_check_mark:|varies|:heavy_check_mark:
 
 [^1]: Easy if a previous version is still installed.
 [^2]: Snap packages are automatically updated. Homebrew requires advanced configuration.
-[^3]: Possible but requires advanced configuration.

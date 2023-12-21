@@ -16,7 +16,7 @@ import (
 )
 
 func main() {
-	// The current is built with de4748c47c67392a57f250714509f590f68ad395 HEAD, tag: go1.20.
+	// The current is built with 446a5dcf5a3230ce9832682d8f521071d8a34a2b (go 1.22 dev. Thu Oct 5 12:20:11 2023 -0700)
 	fmt.Println("Forking ...")
 	defer fmt.Println("Done ...")
 
@@ -162,7 +162,8 @@ func copyGoPackage(dst, src string) {
 
 func doWithGoFiles(dir string,
 	rewrite func(name string),
-	transform func(name, in string) string) {
+	transform func(name, in string) string,
+) {
 	if rewrite == nil && transform == nil {
 		return
 	}

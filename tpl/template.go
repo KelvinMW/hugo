@@ -23,6 +23,7 @@ import (
 	"unicode"
 
 	bp "github.com/gohugoio/hugo/bufferpool"
+	"github.com/gohugoio/hugo/output/layouts"
 
 	"github.com/gohugoio/hugo/output"
 
@@ -56,11 +57,17 @@ type UnusedTemplatesProvider interface {
 	UnusedTemplates() []FileInfo
 }
 
+// TemplateHandlers holds the templates needed by Hugo.
+type TemplateHandlers struct {
+	Tmpl    TemplateHandler
+	TxtTmpl TemplateParseFinder
+}
+
 // TemplateHandler finds and executes templates.
 type TemplateHandler interface {
 	TemplateFinder
 	ExecuteWithContext(ctx context.Context, t Template, wr io.Writer, data any) error
-	LookupLayout(d output.LayoutDescriptor, f output.Format) (Template, bool, error)
+	LookupLayout(d layouts.LayoutDescriptor, f output.Format) (Template, bool, error)
 	HasTemplate(name string) bool
 }
 
@@ -122,21 +129,6 @@ type TemplatesProvider interface {
 	TextTmpl() TemplateParseFinder
 }
 
-// WithInfo wraps the info in a template.
-func WithInfo(templ Template, info Info) Template {
-	if manager, ok := info.(InfoManager); ok {
-		return &templateInfoManager{
-			Template:    templ,
-			InfoManager: manager,
-		}
-	}
-
-	return &templateInfo{
-		Template: templ,
-		Info:     info,
-	}
-}
-
 var baseOfRe = regexp.MustCompile("template: (.*?):")
 
 func extractBaseOf(err string) string {
@@ -166,15 +158,12 @@ type page interface {
 	IsNode() bool
 }
 
-func GetHasLockFromContext(ctx context.Context) bool {
-	if v := ctx.Value(texttemplate.HasLockContextKey); v != nil {
-		return v.(bool)
-	}
-	return false
+func GetCallbackFunctionFromContext(ctx context.Context) any {
+	return ctx.Value(texttemplate.CallbackContextKey)
 }
 
-func SetHasLockInContext(ctx context.Context, hasLock bool) context.Context {
-	return context.WithValue(ctx, texttemplate.HasLockContextKey, hasLock)
+func SetCallbackFunctionInContext(ctx context.Context, fn any) context.Context {
+	return context.WithValue(ctx, texttemplate.CallbackContextKey, fn)
 }
 
 const hugoNewLinePlaceholder = "___hugonl_"

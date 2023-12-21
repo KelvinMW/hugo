@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"math/rand"
 	"mime"
 	"net/http"
 	"net/http/httputil"
@@ -25,6 +26,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/gohugoio/hugo/common/hugio"
 	"github.com/gohugoio/hugo/common/maps"
@@ -63,7 +65,6 @@ func responseToData(res *http.Response, readBody bool) map[string]any {
 	}
 
 	return m
-
 }
 
 func toHTTPError(err error, res *http.Response, readBody bool) *HTTPError {
@@ -81,6 +82,15 @@ func toHTTPError(err error, res *http.Response, readBody bool) *HTTPError {
 		error: err,
 		Data:  responseToData(res, readBody),
 	}
+}
+
+var temporaryHTTPStatusCodes = map[int]bool{
+	408: true,
+	429: true,
+	500: true,
+	502: true,
+	503: true,
+	504: true,
 }
 
 // FromRemote expects one or n-parts of a URL to a resource
@@ -108,30 +118,58 @@ func (c *Client) FromRemote(uri string, optionsm map[string]any) (resource.Resou
 			return nil, err
 		}
 
-		req, err := options.NewRequest(uri)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create request for resource %s: %w", uri, err)
-		}
+		var (
+			start          time.Time
+			nextSleep      = time.Duration((rand.Intn(1000) + 100)) * time.Millisecond
+			nextSleepLimit = time.Duration(5) * time.Second
+		)
 
-		res, err := c.httpClient.Do(req)
-		if err != nil {
-			return nil, err
-		}
-		defer res.Body.Close()
+		for {
+			b, retry, err := func() ([]byte, bool, error) {
+				req, err := options.NewRequest(uri)
+				if err != nil {
+					return nil, false, fmt.Errorf("failed to create request for resource %s: %w", uri, err)
+				}
 
-		httpResponse, err := httputil.DumpResponse(res, true)
-		if err != nil {
-			return nil, toHTTPError(err, res, !isHeadMethod)
-		}
+				res, err := c.httpClient.Do(req)
+				if err != nil {
+					return nil, false, err
+				}
+				defer res.Body.Close()
 
-		if res.StatusCode != http.StatusNotFound {
-			if res.StatusCode < 200 || res.StatusCode > 299 {
-				return nil, toHTTPError(fmt.Errorf("failed to fetch remote resource: %s", http.StatusText(res.StatusCode)), res, !isHeadMethod)
+				if res.StatusCode != http.StatusNotFound {
+					if res.StatusCode < 200 || res.StatusCode > 299 {
+						return nil, temporaryHTTPStatusCodes[res.StatusCode], toHTTPError(fmt.Errorf("failed to fetch remote resource: %s", http.StatusText(res.StatusCode)), res, !isHeadMethod)
+					}
+				}
 
+				b, err := httputil.DumpResponse(res, true)
+				if err != nil {
+					return nil, false, toHTTPError(err, res, !isHeadMethod)
+				}
+
+				return b, false, nil
+			}()
+			if err != nil {
+				if retry {
+					if start.IsZero() {
+						start = time.Now()
+					} else if d := time.Since(start) + nextSleep; d >= c.rs.Cfg.Timeout() {
+						c.rs.Logger.Errorf("Retry timeout (configured to %s) fetching remote resource.", c.rs.Cfg.Timeout())
+						return nil, err
+					}
+					time.Sleep(nextSleep)
+					if nextSleep < nextSleepLimit {
+						nextSleep *= 2
+					}
+					continue
+				}
+				return nil, err
 			}
-		}
 
-		return hugio.ToReadCloser(bytes.NewReader(httpResponse)), nil
+			return hugio.ToReadCloser(bytes.NewReader(b)), nil
+
+		}
 	})
 	if err != nil {
 		return nil, err
@@ -171,10 +209,17 @@ func (c *Client) FromRemote(uri string, optionsm map[string]any) (resource.Resou
 
 	contentType := res.Header.Get("Content-Type")
 
-	if isHeadMethod {
-		// We have no body to work with, so we need to use the Content-Type header.
-		mediaType, _ = media.FromString(contentType)
-	} else {
+	// For HEAD requests we have no body to work with, so we need to use the Content-Type header.
+	if isHeadMethod || c.rs.ExecHelper.Sec().HTTP.MediaTypes.Accept(contentType) {
+		var found bool
+		mediaType, found = c.rs.MediaTypes().GetByType(contentType)
+		if !found {
+			// A media type not configured in Hugo, just create one from the content type string.
+			mediaType, _ = media.FromString(contentType)
+		}
+	}
+
+	if mediaType.IsZero() {
 
 		var extensionHints []string
 
@@ -197,7 +242,7 @@ func (c *Client) FromRemote(uri string, optionsm map[string]any) (resource.Resou
 		}
 
 		// Now resolve the media type primarily using the content.
-		mediaType = media.FromContent(c.rs.MediaTypes, extensionHints, body)
+		mediaType = media.FromContent(c.rs.MediaTypes(), extensionHints, body)
 
 	}
 
@@ -255,22 +300,6 @@ func addUserProvidedHeaders(headers map[string]any, req *http.Request) {
 			req.Header.Add(key, s)
 		}
 	}
-}
-
-func hasHeaderValue(m http.Header, key, value string) bool {
-	var s []string
-	var ok bool
-
-	if s, ok = m[key]; !ok {
-		return false
-	}
-
-	for _, v := range s {
-		if v == value {
-			return true
-		}
-	}
-	return false
 }
 
 func hasHeaderKey(m http.Header, key string) bool {

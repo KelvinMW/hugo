@@ -1,15 +1,14 @@
 ---
-title: Links and Cross References
-linkTitle: Links and Cross References
+title: Links and cross references
 description: Shortcodes for creating links to documents.
 categories: [content management]
-keywords: ["cross references","references", "anchors", "urls"]
+keywords: [cross references,references,anchors,urls]
 menu:
   docs:
     parent: content-management
     weight: 170
-toc: true
 weight: 170
+toc: true
 aliases: [/extras/crossreferences/]
 ---
 
@@ -19,7 +18,7 @@ The `ref` and `relref` shortcodes display the absolute and relative permalinks t
 
 The `ref` and `relref` shortcodes require a single parameter: the path to a content document, with or without a file extension, with or without an anchor. Paths without a leading `/` are first resolved relative to the current page, then to the remainder of the site.
 
-```
+```text
 .
 └── content
     ├── about
@@ -35,7 +34,6 @@ The `ref` and `relref` shortcodes require a single parameter: the path to a cont
 ```
 
 The pages can be referenced as follows:
-
 
 ```text
 {{</* ref "document2" */>}}             // <- From pages/document1.md, relative path
@@ -78,7 +76,7 @@ To link to another language version of a document, use this syntax:
 {{</* relref path="document.md" lang="ja" */>}}
 ```
 
-### Get another Output Format
+### Get another output format
 
 To link to another Output Format of a document, use this syntax:
 
@@ -139,14 +137,13 @@ produces this HTML:
 
 ## Ref and RelRef Configuration
 
-The behavior can, since Hugo 0.45, be configured in `config.toml`:
+The behavior can be configured in `hugo.toml`:
 
 refLinksErrorLevel ("ERROR")
 : When using `ref` or `relref` to resolve page links and a link cannot resolved, it will be logged with this log level. Valid values are `ERROR` (default) or `WARNING`. Any `ERROR` will fail the build (`exit -1`).
 
 refLinksNotFoundURL
 : URL to be used as a placeholder when a page reference cannot be found in `ref` or `relref`. Is used as-is.
-
 
 [lists]: /templates/lists/
 [output formats]: /templates/output-formats/

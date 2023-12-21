@@ -113,12 +113,6 @@ func ForceRefresh() {
 	RefreshPath("/x.js")
 }
 
-// NavigateToPath tells livereload to navigate to the given path.
-// This translates to `window.location.href = path` in the client.
-func NavigateToPath(path string) {
-	RefreshPath(hugoNavigatePrefix + path)
-}
-
 // NavigateToPathForPort is similar to NavigateToPath but will also
 // set window.location.port to the given port value.
 func NavigateToPathForPort(path string, port int) {
@@ -143,9 +137,9 @@ func refreshPathForPort(s string, port int) {
 	wsHub.broadcast <- []byte(msg)
 }
 
-// ServeJS serves the liverreload.js who's reference is injected into the page.
+// ServeJS serves the livereload.js who's reference is injected into the page.
 func ServeJS(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", media.JavascriptType.Type())
+	w.Header().Set("Content-Type", media.Builtin.JavascriptType.Type)
 	w.Write(liveReloadJS())
 }
 

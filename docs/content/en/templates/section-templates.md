@@ -1,40 +1,35 @@
 ---
-title: Section Page Templates
-linktitle: Section Templates
+title: Section page templates
+linkTitle: Section templates
 description: Templates used for section pages are **lists** and therefore have all the variables and methods available to list pages.
-date: 2017-02-01
-publishdate: 2017-02-01
-lastmod: 2017-02-01
 categories: [templates]
 keywords: [lists,sections,templates]
 menu:
   docs:
-    parent: "templates"
-    weight: 40
-weight: 40
-sections_weight: 40
-draft: false
-aliases: [/templates/sections/]
+    parent: templates
+    weight: 80
+weight: 80
 toc: true
+aliases: [/templates/sections/]
 ---
 
-## Add Content and Front Matter to Section Templates
+## Add content and front matter to section templates
 
 To effectively leverage section page templates, you should first understand Hugo's [content organization](/content-management/organization/) and, specifically, the purpose of `_index.md` for adding content and front matter to section and other list pages.
 
-## Section Template Lookup Order
+## Section template lookup order
 
 See [Template Lookup](/templates/lookup-order/).
 
-## Page Kinds
+## Page kinds
 
 Every `Page` in Hugo has a `.Kind` attribute.
 
-{{% page-kinds %}}
+{{% include "content-management/_common/page-kinds.md" %}}
 
-## `.Site.GetPage` with Sections
+## `.Site.GetPage` with sections
 
-`Kind` can easily be combined with the [`where` function][where] in your templates to create kind-specific lists of content. This method is ideal for creating lists, but there are times where you may want to fetch just the index page of a single section via the section's path.
+`Kind` can easily be combined with the [`where`] function in your templates to create kind-specific lists of content. This method is ideal for creating lists, but there are times where you may want to fetch just the index page of a single section via the section's path.
 
 The [`.GetPage` function][getpage] looks up an index page of a given `Kind` and `path`.
 
@@ -46,27 +41,27 @@ Examples:
 - `{{ .Site.GetPage "section" "posts" }}`
 - `{{ .Site.GetPage "page" "search" }}`
 
-## Example: Creating a Default Section Template
+## Example: creating a default section template
 
-{{< code file="layouts/_default/section.html" download="section.html" >}}
+{{< code file=layouts/_default/section.html >}}
 {{ define "main" }}
   <main>
-      {{ .Content }}
-          <ul class="contents">
-          {{ range .Paginator.Pages }}
-              <li>{{.Title}}
-                  <div>
-                    {{ partial "summary.html" . }}
-                  </div>
-              </li>
-          {{ end }}
-          </ul>
-      {{ partial "pagination.html" . }}
+    {{ .Content }}
+      <ul class="contents">
+        {{ range .Paginator.Pages }}
+          <li>{{ .Title }}
+            <div>
+              {{ partial "summary.html" . }}
+            </div>
+          </li>
+        {{ end }}
+      </ul>
+    {{ partial "pagination.html" . }}
   </main>
 {{ end }}
 {{< /code >}}
 
-### Example: Using `.Site.GetPage`
+### Example: using `.Site.GetPage`
 
 The `.Site.GetPage` example that follows assumes the following project directory structure:
 
@@ -74,10 +69,10 @@ The `.Site.GetPage` example that follows assumes the following project directory
 .
 └── content
     ├── blog
-    │   ├── _index.md # "title: My Hugo Blog" in the front matter
-    │   ├── post-1.md
-    │   ├── post-2.md
-    │   └── post-3.md
+    │   ├── _index.md # "title: My Hugo Blog" in the front matter
+    │   ├── post-1.md
+    │   ├── post-2.md
+    │   └── post-3.md
     └── events #Note there is no _index.md file in "events"
         ├── event-1.md
         └── event-2.md
@@ -108,8 +103,8 @@ Which then returns the following:
 ```
 
 [contentorg]: /content-management/organization/
-[getpage]: /functions/getpage/
+[getpage]: /methods/page/getpage
 [lists]: /templates/lists/
 [lookup]: /templates/lookup-order/
-[where]: /functions/where/
+[`where`]: /functions/collections/where
 [sections]: /content-management/sections/
